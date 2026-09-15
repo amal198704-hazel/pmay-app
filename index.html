@@ -1,0 +1,2110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Beneficiary Records</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@100..900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --nav-height: 68px;
+            --search-height: 64px;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            background: #f4f7fc;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ============ TOP BAR ============ */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            padding: 12px 16px 10px;
+            z-index: 500;
+            box-shadow: 0 2px 12px rgba(11, 43, 60, 0.06);
+            border-bottom: 1px solid #eef3f9;
+        }
+
+        .top-bar-inner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .search-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f0f5fc;
+            border: 1px solid #e2ecf7;
+            border-radius: 16px;
+            padding: 10px 14px;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .search-wrap:focus-within {
+            border-color: #1e6b9e;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(30, 107, 158, 0.1);
+        }
+
+        .search-wrap svg {
+            flex-shrink: 0;
+            color: #8293a3;
+            width: 18px;
+            height: 18px;
+        }
+
+        #search-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: #142f3f;
+            min-width: 0;
+        }
+
+        #search-input::placeholder {
+            color: #97a8b8;
+        }
+
+        .clear-search {
+            background: #dfe9f2;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            color: #4b5e6e;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .clear-search.visible {
+            display: flex;
+        }
+
+        /* Refresh button — spinning on top right */
+        .refresh-btn {
+            background: #eef4fb;
+            border: 1px solid #d9e6f2;
+            color: #1e6b9e;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+            transition: background 0.15s, transform 0.15s;
+            position: relative;
+        }
+
+        .refresh-btn:hover {
+            background: #dceafa;
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.95);
+        }
+
+        .refresh-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .refresh-btn.spinning svg {
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Pending sync badge on refresh button */
+        .refresh-btn .pending-count {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #f0a30a;
+            color: #fff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+            border: 2px solid #fff;
+            box-sizing: content-box;
+        }
+
+        .refresh-btn.has-pending .pending-count {
+            display: flex;
+        }
+
+        .offline-pill {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: #fff3cd;
+            color: #7a5300;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 100px;
+            margin: 6px auto 0;
+            max-width: 480px;
+            justify-content: center;
+            width: fit-content;
+        }
+
+        body.is-offline .offline-pill {
+            display: flex;
+        }
+
+        /* ============ MAIN ============ */
+        main {
+            padding: calc(var(--search-height) + 16px) 12px calc(var(--nav-height) + 20px);
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        #card-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .status-msg {
+            text-align: center;
+            color: #5a6b7c;
+            font-size: 0.95rem;
+            margin-top: 40px;
+        }
+
+        /* ============ CARD ============ */
+        .card {
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 12px 28px -8px rgba(0, 20, 30, 0.12), 0 4px 12px -4px rgba(0, 0, 0, 0.05);
+            padding: 20px 20px 22px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .card.has-pending-edit {
+            border-color: #f0a30a;
+            border-width: 1.5px;
+        }
+
+        .card.has-pending-edit::after {
+            content: "• unsaved";
+            position: absolute;
+            top: 12px;
+            left: 20px;
+            background: #f0a30a;
+            color: #fff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 100px;
+            letter-spacing: 0.02em;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .id-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .id-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #5a6b7c;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: #eef3f9;
+            padding: 5px 11px;
+            border-radius: 30px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .id-value {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0b2b3c;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .status-badge {
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 100px;
+            background: #e6f7ec;
+            color: #0f6e3f;
+            white-space: nowrap;
+            border: 1px solid rgba(40, 160, 80, 0.2);
+        }
+
+        .name-section {
+            margin-bottom: 16px;
+        }
+
+        .name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0b2b3c;
+            line-height: 1.25;
+            letter-spacing: -0.02em;
+        }
+
+        .details-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .detail-icon {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            background: #f0f5fc;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e6b9e;
+        }
+
+        .detail-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .detail-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6f7e8f;
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #142f3f;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .detail-value.address {
+            font-family: 'Noto Sans Malayalam', 'Inter', sans-serif;
+            color: #173d52;
+        }
+
+        .mobile-link {
+            color: #173d52;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .mobile-link:hover {
+            color: #0f6e9e;
+            text-decoration: underline;
+        }
+
+        .two-col {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .two-col .detail-item {
+            flex: 1 1 130px;
+        }
+
+        /* ============ DETAILS MODAL ============ */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 25, 40, 0.55);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .details-sheet {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ffffff;
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+            padding: 18px 20px calc(var(--nav-height) + 40px);
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-backdrop.active .details-sheet {
+            transform: translateY(0);
+        }
+
+        .sheet-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-top: 8px;
+        }
+
+        .close-btn {
+            background: #f0f5fc;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1rem;
+            color: #4b5e6e;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+
+        .close-btn:hover {
+            background: #e2ecf7;
+        }
+
+        .group-card {
+            background: #f9fbfe;
+            border: 1px solid #eaf0f7;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .group-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #1e6b9e;
+            margin-bottom: 12px;
+        }
+
+        .field-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #8293a3;
+            margin-bottom: 4px;
+        }
+
+        .field-value {
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: #142f3f;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .grid-two {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .grid-three {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .amount-box {
+            background: #ffffff;
+            border: 1px solid #eaf0f7;
+            border-radius: 12px;
+            padding: 9px 6px;
+            text-align: center;
+        }
+
+        .amount-box .field-label {
+            margin-bottom: 5px;
+            font-size: 0.62rem;
+        }
+
+        .amount-box .field-value {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #0b2b3c;
+        }
+
+        .total-box {
+            margin-top: 12px;
+            background: linear-gradient(135deg, #e8f4ff, #e6f7ec);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #d6e8f5;
+        }
+
+        .total-box span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #2c5a76;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .total-box h4 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0b2b3c;
+        }
+
+        .remarks-text {
+            font-size: 0.88rem;
+            color: #3c4f5e;
+            line-height: 1.55;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            border: 1px solid #eaf0f7;
+            white-space: pre-wrap;
+        }
+
+        .detail-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .edit-pencil {
+            background: #eef4fb;
+            border: 1px solid #d9e6f2;
+            color: #1e6b9e;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            transition: background 0.15s, transform 0.15s;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .edit-pencil:hover {
+            background: #dceafa;
+            transform: scale(1.06);
+        }
+
+        .edit-pencil svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        .edit-pencil.has-pending::after {
+            content: "";
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f0a30a;
+            border: 1.5px solid #fff;
+        }
+
+        /* ============ EDIT MODAL ============ */
+        .edit-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 25, 40, 0.55);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            padding: 20px;
+        }
+
+        .edit-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .edit-dialog {
+            background: #fff;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 22px;
+            padding: 20px;
+            box-shadow: 0 24px 50px rgba(0, 0, 0, 0.25);
+            transform: scale(0.94);
+            transition: transform 0.2s ease;
+        }
+
+        .edit-backdrop.active .edit-dialog {
+            transform: scale(1);
+        }
+
+        .edit-dialog h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0b2b3c;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .edit-dialog textarea {
+            width: 100%;
+            min-height: 110px;
+            border: 1px solid #d9e6f2;
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-family: 'Noto Sans Malayalam', 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: #142f3f;
+            resize: vertical;
+            line-height: 1.5;
+            outline: none;
+            background: #f9fbfe;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .edit-dialog textarea:focus {
+            border-color: #1e6b9e;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(30, 107, 158, 0.12);
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .edit-actions button {
+            flex: 1;
+            padding: 11px 14px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-cancel {
+            background: #f0f5fc;
+            color: #4b5e6e;
+        }
+
+        .btn-cancel:hover {
+            background: #e2ecf7;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #1e6b9e, #0f4c73);
+            color: #fff;
+        }
+
+        .btn-save:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ============ TOAST ============ */
+        .toast {
+            position: fixed;
+            bottom: calc(var(--nav-height) + 20px);
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #0b2b3c;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s ease;
+            z-index: 3000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.error {
+            background: #b42318;
+        }
+
+        .toast.success {
+            background: #0f6e3f;
+        }
+
+        /* ============ BOTTOM NAV ============ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid #e6edf5;
+            display: flex;
+            align-items: stretch;
+            justify-content: space-around;
+            z-index: 1300;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+            box-shadow: 0 -4px 20px rgba(11, 43, 60, 0.05);
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.62rem;
+            font-weight: 600;
+            color: #7a8b9b;
+            padding: 8px 2px;
+            transition: color 0.15s, background 0.15s;
+            position: relative;
+        }
+
+        .nav-btn:hover {
+            background: #f4f8fc;
+        }
+
+        .nav-btn.active {
+            color: #1e6b9e;
+        }
+
+        .nav-btn.active::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 24px;
+            height: 3px;
+            background: #1e6b9e;
+            border-radius: 0 0 4px 4px;
+        }
+
+        .nav-btn svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .nav-btn.has-badge::before {
+            content: attr(data-badge);
+            position: absolute;
+            top: 4px;
+            right: 20%;
+            background: #1e6b9e;
+            color: #fff;
+            font-size: 0.6rem;
+            font-weight: 700;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        /* ============ FILTER SHEET ============ */
+        .filter-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 25, 40, 0.5);
+            backdrop-filter: blur(3px);
+            z-index: 1100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .filter-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .filter-sheet {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ffffff;
+            border-radius: 24px 24px 0 0;
+            padding: 16px 20px calc(var(--nav-height) + 24px);
+            z-index: 1150;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            max-height: 75vh;
+            overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .filter-sheet.active {
+            transform: translateY(0);
+        }
+
+        .filter-handle {
+            width: 44px;
+            height: 5px;
+            background: #d7e0e9;
+            border-radius: 100px;
+            margin: 4px auto 14px;
+        }
+
+        .filter-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0b2b3c;
+            margin-bottom: 14px;
+        }
+
+        .chip-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            background: #f0f5fc;
+            border: 1px solid #e2ecf7;
+            color: #2c5a76;
+            padding: 8px 14px;
+            border-radius: 100px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+
+        .chip:hover {
+            background: #e2ecf7;
+        }
+
+        .chip.selected {
+            background: linear-gradient(135deg, #1e6b9e, #0f4c73);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .chip .count {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 100px;
+            padding: 0 6px;
+            margin-left: 6px;
+            font-size: 0.7rem;
+        }
+
+        .chip.selected .count {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ============ DASHBOARD ============ */
+        .dashboard-sheet {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f4f7fc;
+            z-index: 1200;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+            overflow-y: auto;
+            padding: 20px 20px calc(var(--nav-height) + 40px);
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .dashboard-sheet.active {
+            transform: translateY(0);
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-top: 6px;
+        }
+
+        .dashboard-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0b2b3c;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            border: 1px solid #eaf0f7;
+            box-shadow: 0 4px 12px -4px rgba(0, 20, 30, 0.06);
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .stat-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0b2b3c;
+        }
+
+        .stat-count {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e6b9e;
+            background: #eef4fb;
+            border-radius: 100px;
+            padding: 3px 12px;
+        }
+
+        .stat-bar-track {
+            height: 8px;
+            background: #eef3f9;
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1e6b9e, #2e9bd6);
+            border-radius: 100px;
+            transition: width 0.6s ease;
+        }
+
+        .total-card {
+            background: linear-gradient(135deg, #1e6b9e, #0f4c73);
+            color: #fff;
+            padding: 20px;
+            border-radius: 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 12px 30px -10px rgba(30, 107, 158, 0.4);
+        }
+
+        .total-card .label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 0.85;
+        }
+
+        .total-card .value {
+            font-size: 2.4rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-top: 4px;
+            letter-spacing: -0.03em;
+        }
+
+        .empty-filter {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8293a3;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 360px) {
+            .name {
+                font-size: 1.15rem;
+            }
+
+            .id-value {
+                font-size: 0.95rem;
+            }
+
+            .nav-btn {
+                font-size: 0.58rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ============ TOP BAR (SEARCH + REFRESH) ============ -->
+    <div class="top-bar">
+        <div class="top-bar-inner">
+            <div class="search-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input id="search-input" type="search" placeholder="Search…" autocomplete="off">
+                <button class="clear-search" id="clear-search" aria-label="Clear search">✕</button>
+            </div>
+
+            <button class="refresh-btn" id="refresh-btn" onclick="manualRefresh()" title="Sync with Google Sheet">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                    <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                </svg>
+                <span class="pending-count" id="pending-count">0</span>
+            </button>
+        </div>
+        <div class="offline-pill">
+            <span>⚠️</span> Offline — showing cached data
+        </div>
+    </div>
+
+    <!-- ============ CARD LIST ============ -->
+    <main>
+        <div id="card-container">
+            <p class="status-msg">Loading records...</p>
+        </div>
+    </main>
+
+    <!-- ============ DETAILS MODAL ============ -->
+    <div id="details-modal" class="modal-backdrop" onclick="closeDetails()">
+        <div class="details-sheet" onclick="event.stopPropagation()">
+            <div class="sheet-top">
+                <div>
+                    <span class="id-label">ID</span>
+                    <h3 class="id-value" id="m-id" style="margin-top: 6px;"></h3>
+                </div>
+                <button class="close-btn" onclick="closeDetails()" aria-label="Close">✕</button>
+            </div>
+
+            <div class="group-card">
+                <div class="group-title">Beneficiary Overview</div>
+                <div class="name" id="m-name" style="margin-bottom: 12px;"></div>
+                <div class="grid-two">
+                    <div>
+                        <div class="field-label">Category</div>
+                        <div class="field-value" id="m-category">-</div>
+                    </div>
+                    <div>
+                        <div class="field-label">Ward</div>
+                        <div class="field-value" id="m-ward">-</div>
+                    </div>
+                    <div>
+                        <div class="field-label">Stage</div>
+                        <div class="field-value" id="m-stage">-</div>
+                    </div>
+                    <div>
+                        <div class="field-label">Agreement</div>
+                        <div class="field-value" id="m-agreement">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group-card">
+                <div class="group-title">Contact & Location</div>
+                <div>
+                    <div class="field-label">Mobile Number</div>
+                    <div class="field-value" id="m-mobile">-</div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <div class="detail-label-row">
+                        <div class="field-label">Address</div>
+                        <button class="edit-pencil" id="edit-pencil-address" title="Edit address"
+                            onclick="openEdit('Address', document.getElementById('m-address').innerText)">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="field-value" id="m-address"
+                        style="font-family: 'Noto Sans Malayalam', 'Inter', sans-serif;">-</div>
+                </div>
+            </div>
+
+            <div class="group-card">
+                <div class="group-title">Disbursement & Shares</div>
+                <div class="field-label" style="margin-bottom: 8px;">Central Share (CS)</div>
+                <div class="grid-three" style="margin-bottom: 14px;">
+                    <div class="amount-box">
+                        <div class="field-label">CS 1</div>
+                        <div class="field-value" id="m-cs1">₹0</div>
+                    </div>
+                    <div class="amount-box">
+                        <div class="field-label">CS 2</div>
+                        <div class="field-value" id="m-cs2">₹0</div>
+                    </div>
+                    <div class="amount-box">
+                        <div class="field-label">CS 3</div>
+                        <div class="field-value" id="m-cs3">₹0</div>
+                    </div>
+                </div>
+                <div class="field-label" style="margin-bottom: 8px;">Local Body Shares</div>
+                <div class="grid-three">
+                    <div class="amount-box">
+                        <div class="field-label">BP Share</div>
+                        <div class="field-value" id="m-bp">₹0</div>
+                    </div>
+                    <div class="amount-box">
+                        <div class="field-label">GP Share</div>
+                        <div class="field-value" id="m-gp">₹0</div>
+                    </div>
+                    <div class="amount-box">
+                        <div class="field-label">DP Share</div>
+                        <div class="field-value" id="m-dp">₹0</div>
+                    </div>
+                </div>
+                <div class="total-box">
+                    <span>Total Disbursed</span>
+                    <h4 id="m-total">₹0</h4>
+                </div>
+            </div>
+
+            <div class="group-card">
+                <div class="detail-label-row">
+                    <div class="group-title" style="margin-bottom: 0;">Remarks & Progress Notes</div>
+                    <button class="edit-pencil" id="edit-pencil-remarks" title="Edit remarks"
+                        onclick="openEdit('Remarks', document.getElementById('m-remarks').innerText)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="remarks-text" id="m-remarks" style="margin-top: 10px;">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ EDIT MODAL ============ -->
+    <div id="edit-modal" class="edit-backdrop" onclick="closeEdit()">
+        <div class="edit-dialog" onclick="event.stopPropagation()">
+            <h4>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                Edit <span id="edit-field-label">Field</span>
+            </h4>
+            <textarea id="edit-textarea" placeholder="Enter new value..."></textarea>
+            <div class="edit-actions">
+                <button class="btn-cancel" onclick="closeEdit()">Cancel</button>
+                <button class="btn-save" id="edit-save-btn" onclick="saveEdit()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ FILTER BACKDROP + SHEET ============ -->
+    <div id="filter-backdrop" class="filter-backdrop" onclick="closeFilter()"></div>
+    <div id="filter-sheet" class="filter-sheet">
+        <div class="filter-handle"></div>
+        <div class="filter-title" id="filter-title">Filter</div>
+        <div class="chip-grid" id="filter-chips"></div>
+    </div>
+
+    <!-- ============ DASHBOARD SHEET ============ -->
+    <div id="dashboard-sheet" class="dashboard-sheet">
+        <div class="dashboard-header">
+            <div class="dashboard-title">📊 Dashboard</div>
+            <button class="close-btn" onclick="closeDashboard()" aria-label="Close">✕</button>
+        </div>
+        <div id="dashboard-content"></div>
+    </div>
+
+    <!-- ============ BOTTOM NAV ============ -->
+    <nav class="bottom-nav">
+        <button class="nav-btn" id="nav-back" onclick="navBack()" title="Back">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back</span>
+        </button>
+
+        <button class="nav-btn" id="nav-stage" onclick="openStageFilter()" title="Filter by Stage">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            <span>Stage</span>
+        </button>
+
+        <button class="nav-btn" id="nav-ward" onclick="openWardFilter()" title="Filter by Ward">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Ward</span>
+        </button>
+
+        <button class="nav-btn" id="nav-clear" onclick="clearFilters()" title="Clear filters">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span>Clear</span>
+        </button>
+
+        <button class="nav-btn" id="nav-stats" onclick="openDashboard()" title="Dashboard">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="9"></rect>
+                <rect x="14" y="3" width="7" height="5"></rect>
+                <rect x="14" y="12" width="7" height="9"></rect>
+                <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            <span>Stats</span>
+        </button>
+    </nav>
+
+    <!-- ============ TOAST ============ -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        /* ================================================================
+           CONFIG
+           ================================================================ */
+        const api = "https://script.google.com/macros/s/AKfycbyZDgxv-zdMVWyYM7mHjLuoI570IC12mzbl-16Viw6bDj5Yt8_wukUKlkpG17Gwr8_N/exec";
+
+        /* ================================================================
+           SESSION STORAGE
+           ================================================================
+           sessionStorage auto-clears when the tab/window closes.
+
+           Keys:
+             bm.records   → working copy of records (fetched fresh on open)
+             bm.pending   → edits made this session, waiting to be pushed
+           ================================================================ */
+        const Store = {
+            KEYS: {
+                RECORDS: "bm.records",
+                PENDING: "bm.pending"
+            },
+
+            getRecords() {
+                try {
+                    const raw = sessionStorage.getItem(this.KEYS.RECORDS);
+                    return raw ? JSON.parse(raw) : null;
+                } catch (e) { return null; }
+            },
+            setRecords(arr) {
+                try { sessionStorage.setItem(this.KEYS.RECORDS, JSON.stringify(arr)); }
+                catch (e) { console.warn("Store write failed", e); }
+            },
+
+            getPending() {
+                try {
+                    const raw = sessionStorage.getItem(this.KEYS.PENDING);
+                    return raw ? JSON.parse(raw) : [];
+                } catch (e) { return []; }
+            },
+            setPending(arr) {
+                try { sessionStorage.setItem(this.KEYS.PENDING, JSON.stringify(arr)); }
+                catch (e) { console.warn("Pending write failed", e); }
+            },
+
+            // A pending edit is keyed by { id, field } — newest wins
+            addPending(entry) {
+                const list = this.getPending()
+                    .filter(x => !(x.id === entry.id && x.field === entry.field));
+                list.push({ ...entry, ts: Date.now() });
+                this.setPending(list);
+                return list.length;
+            },
+            removePending(id, field) {
+                const list = this.getPending()
+                    .filter(x => !(x.id === id && x.field === field));
+                this.setPending(list);
+                return list.length;
+            },
+            clearPending() {
+                this.setPending([]);
+            }
+        };
+
+        /* ================================================================
+           STATE
+           ================================================================ */
+        let records = [];
+        let filteredRecords = [];
+        let activeStageFilter = null;
+        let activeWardFilter = null;
+        let currentSearch = "";
+        let editingContext = { id: null, field: null };
+
+        /* ================================================================
+           HELPERS
+           ================================================================ */
+        function getField(item, keys, index) {
+            for (const k of keys) {
+                if (Object.prototype.hasOwnProperty.call(item, k)) {
+                    return item[k] == null ? "" : item[k];
+                }
+            }
+            if (index !== undefined && item[index] !== undefined) return item[index];
+            return "";
+        }
+
+        function getStage(r) { return String(getField(r, ["Stage"], 5) || "").trim(); }
+        function getWard(r) { return String(getField(r, ["Ward"], 4) || "").trim(); }
+
+        function recordIdOf(r) {
+            const candidates = [r["Pmay Id"], r["PMAY ID"], r["PmayID"], r["ID"], r[0]];
+            for (const c of candidates) {
+                if (c !== undefined && c !== null && String(c).trim() !== "") {
+                    return String(c).replace(/^#/, "").trim();
+                }
+            }
+            return "";
+        }
+
+        function formatINR(val) {
+            if (val === undefined || val === null || val === "") return "₹0";
+            const num = Number(String(val).replace(/[^0-9.-]/g, ""));
+            if (isNaN(num)) return String(val);
+            return "₹" + num.toLocaleString("en-IN");
+        }
+
+        function escapeHtml(s) {
+            return String(s == null ? "" : s)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function escapeAttr(s) {
+            return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+        }
+
+        function hasPendingEdit(id, field) {
+            return Store.getPending().some(p => p.id === id && p.field === field);
+        }
+
+        function recordHasPending(id) {
+            return Store.getPending().some(p => p.id === id);
+        }
+
+        /* ================================================================
+           LOAD — on app open, fetch fresh & save a local copy
+           ================================================================ */
+        function bootApp() {
+            const container = document.getElementById("card-container");
+            container.innerHTML = `<p class="status-msg">Loading records...</p>`;
+
+            fetch(api)
+                .then(res => res.json())
+                .then(data => {
+                    if (!Array.isArray(data)) throw new Error("Bad response");
+                    records = data;
+                    Store.setRecords(data);        // <-- local copy saved on open
+                    Store.clearPending();          // fresh session → clean pending
+                    filteredRecords = records.slice();
+                    applyFilters();
+                    updatePendingBadge();
+                    showToast("Records loaded ✓", false, true);
+                })
+                .catch(err => {
+                    console.error("Fetch failed:", err);
+                    document.body.classList.toggle("is-offline", !navigator.onLine);
+                    container.innerHTML =
+                        `<p class="status-msg" style="color:#c92a2a;">Failed to load data. Check your connection and try the refresh button.</p>`;
+                    updatePendingBadge();
+                });
+        }
+
+        /* ================================================================
+           RENDER CARDS
+           ================================================================ */
+        function renderCards() {
+            const container = document.getElementById("card-container");
+            container.innerHTML = "";
+
+            if (filteredRecords.length === 0) {
+                container.innerHTML = `<p class="empty-filter">No matching records. Try clearing filters.</p>`;
+                return;
+            }
+
+            filteredRecords.forEach((item) => {
+                const realIndex = records.indexOf(item);
+                const id = recordIdOf(item);
+                const pmayId = id || "N/A";
+                const name = getField(item, ["Name", "Beneficiary Name"], 1) || "Unnamed";
+                const address = getField(item, ["Address"], 14) || getField(item, ["Address"], 2) || "Not provided";
+                const mobile = getField(item, ["Mobile", "Mobile Number"], 3);
+                const ward = getField(item, ["Ward"], 4) || "-";
+                const stage = getField(item, ["Stage"], 5) || "-";
+                const total = getField(item, ["Total"], 13) || "0";
+                const hasPending = recordHasPending(id);
+
+                const card = document.createElement("div");
+                card.className = "card" + (hasPending ? " has-pending-edit" : "");
+                card.dataset.recordId = id;
+                card.onclick = () => openDetails(realIndex);
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="id-section">
+                            <span class="id-label">ID</span>
+                            <span class="id-value">#${escapeHtml(pmayId)}</span>
+                        </div>
+                        <div class="status-badge">${formatINR(total)}</div>
+                    </div>
+
+                    <div class="name-section">
+                        <div class="name">${escapeHtml(name)}</div>
+                    </div>
+
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                                </svg>
+                            </div>
+                            <div class="detail-content">
+                                <div class="detail-label">Mobile</div>
+                                <div class="detail-value">
+                                    ${mobile ? `<a href="tel:${escapeHtml(mobile)}" class="mobile-link">${escapeHtml(mobile)}</a>` : 'Not provided'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="7" height="7"></rect>
+                                        <rect x="14" y="3" width="7" height="7"></rect>
+                                        <rect x="3" y="14" width="7" height="7"></rect>
+                                        <rect x="14" y="14" width="7" height="7"></rect>
+                                    </svg>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Ward</div>
+                                    <div class="detail-value">${escapeHtml(ward)}</div>
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                        <polyline points="2 17 12 22 22 17"></polyline>
+                                        <polyline points="2 12 12 17 22 12"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Stage</div>
+                                    <div class="detail-value">${escapeHtml(stage)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                            </div>
+                            <div class="detail-content">
+                                <div class="detail-label">Address</div>
+                                <div class="detail-value address">${escapeHtml(address)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        /* ================================================================
+           FILTERING + SEARCH
+           ================================================================ */
+        function applyFilters() {
+            const q = currentSearch.trim().toLowerCase();
+
+            filteredRecords = records.filter(r => {
+                if (activeStageFilter && getStage(r) !== activeStageFilter) return false;
+                if (activeWardFilter && getWard(r) !== activeWardFilter) return false;
+                if (q) {
+                    const haystack = [
+                        getField(r, ["Pmay Id", "PMAY ID", "PmayID", "ID"], 0),
+                        getField(r, ["Name", "Beneficiary Name"], 1),
+                        getField(r, ["Mobile", "Mobile Number"], 3),
+                        getField(r, ["Address"], 14) || getField(r, ["Address"], 2),
+                        getField(r, ["Ward"], 4),
+                        getField(r, ["Stage"], 5)
+                    ].join(" ").toLowerCase();
+                    if (!haystack.includes(q)) return false;
+                }
+                return true;
+            });
+
+            renderCards();
+            updateFilterBadges();
+            updatePendingBadge();
+        }
+
+        document.getElementById("search-input").addEventListener("input", (e) => {
+            currentSearch = e.target.value;
+            document.getElementById("clear-search").classList.toggle("visible", currentSearch.length > 0);
+            applyFilters();
+        });
+
+        document.getElementById("clear-search").addEventListener("click", () => {
+            const el = document.getElementById("search-input");
+            el.value = "";
+            currentSearch = "";
+            document.getElementById("clear-search").classList.remove("visible");
+            applyFilters();
+        });
+
+        /* ================================================================
+           FILTER SHEETS
+           ================================================================ */
+        function countBy(keyFn) {
+            const map = {};
+            records.forEach(r => {
+                const k = keyFn(r) || "—";
+                map[k] = (map[k] || 0) + 1;
+            });
+            return map;
+        }
+
+        function openStageFilter() {
+            const counts = countBy(getStage);
+            const sorted = Object.keys(counts).sort();
+            const chipsHtml = sorted.map(s => `
+                <button class="chip ${activeStageFilter === s ? 'selected' : ''}" onclick="selectStage('${escapeAttr(s)}')">
+                    ${escapeHtml(s)} <span class="count">${counts[s]}</span>
+                </button>
+            `).join("");
+
+            showFilterSheet("Filter by Stage", chipsHtml);
+        }
+
+        function openWardFilter() {
+            const counts = countBy(getWard);
+            const sorted = Object.keys(counts).sort((a, b) => {
+                const na = parseFloat(a), nb = parseFloat(b);
+                if (!isNaN(na) && !isNaN(nb)) return na - nb;
+                return a.localeCompare(b);
+            });
+            const chipsHtml = sorted.map(w => `
+                <button class="chip ${activeWardFilter === w ? 'selected' : ''}" onclick="selectWard('${escapeAttr(w)}')">
+                    Ward ${escapeHtml(w)} <span class="count">${counts[w]}</span>
+                </button>
+            `).join("");
+
+            showFilterSheet("Filter by Ward", chipsHtml);
+        }
+
+        function showFilterSheet(title, chipsHtml) {
+            document.getElementById("filter-title").innerText = title;
+            document.getElementById("filter-chips").innerHTML =
+                chipsHtml || `<div class="empty-filter">No options available</div>`;
+            document.getElementById("filter-backdrop").classList.add("active");
+            document.getElementById("filter-sheet").classList.add("active");
+        }
+
+        function closeFilter() {
+            document.getElementById("filter-backdrop").classList.remove("active");
+            document.getElementById("filter-sheet").classList.remove("active");
+        }
+
+        function selectStage(stage) {
+            activeStageFilter = (activeStageFilter === stage) ? null : stage;
+            closeFilter();
+            applyFilters();
+        }
+
+        function selectWard(ward) {
+            activeWardFilter = (activeWardFilter === ward) ? null : ward;
+            closeFilter();
+            applyFilters();
+        }
+
+        /* ================================================================
+           BADGES
+           ================================================================ */
+        function updateFilterBadges() {
+            const stageBtn = document.getElementById("nav-stage");
+            const wardBtn = document.getElementById("nav-ward");
+            const clearBtn = document.getElementById("nav-clear");
+
+            if (activeStageFilter) {
+                stageBtn.classList.add("active", "has-badge");
+                stageBtn.setAttribute("data-badge", "1");
+            } else {
+                stageBtn.classList.remove("active", "has-badge");
+            }
+
+            if (activeWardFilter) {
+                wardBtn.classList.add("active", "has-badge");
+                wardBtn.setAttribute("data-badge", "1");
+            } else {
+                wardBtn.classList.remove("active", "has-badge");
+            }
+
+            const anyActive = activeStageFilter || activeWardFilter || currentSearch;
+            clearBtn.classList.toggle("active", !!anyActive);
+        }
+
+        function updatePendingBadge() {
+            const pending = Store.getPending().length;
+            const btn = document.getElementById("refresh-btn");
+            const counter = document.getElementById("pending-count");
+
+            counter.innerText = pending;
+            btn.classList.toggle("has-pending", pending > 0);
+        }
+
+        /* ================================================================
+           CLEAR FILTERS
+           ================================================================ */
+        function clearFilters() {
+            activeStageFilter = null;
+            activeWardFilter = null;
+            currentSearch = "";
+            document.getElementById("search-input").value = "";
+            document.getElementById("clear-search").classList.remove("visible");
+            applyFilters();
+            showToast("Filters cleared");
+        }
+
+        /* ================================================================
+           NAV: BACK
+           ================================================================ */
+        function navBack() {
+            if (document.getElementById("edit-modal").classList.contains("active")) {
+                closeEdit(); return;
+            }
+            if (document.getElementById("dashboard-sheet").classList.contains("active")) {
+                closeDashboard(); return;
+            }
+            if (document.getElementById("filter-sheet").classList.contains("active")) {
+                closeFilter(); return;
+            }
+            if (document.getElementById("details-modal").classList.contains("active")) {
+                closeDetails(); return;
+            }
+            window.history.back();
+        }
+
+        /* ================================================================
+           DASHBOARD
+           ================================================================ */
+        function openDashboard() {
+            const stageCounts = countBy(getStage);
+            const wardCounts = countBy(getWard);
+
+            const total = records.length;
+            const stages = Object.keys(stageCounts).sort((a, b) => stageCounts[b] - stageCounts[a]);
+            const maxCount = Math.max(...Object.values(stageCounts), 1);
+
+            const stageBars = stages.map(s => {
+                const c = stageCounts[s];
+                const pct = (c / maxCount) * 100;
+                return `
+                    <div class="stat-card">
+                        <div class="stat-row">
+                            <div class="stat-name">${escapeHtml(s || "—")}</div>
+                            <div class="stat-count">${c}</div>
+                        </div>
+                        <div class="stat-bar-track">
+                            <div class="stat-bar-fill" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            const wardCount = Object.keys(wardCounts).length;
+            const pending = Store.getPending().length;
+
+            document.getElementById("dashboard-content").innerHTML = `
+                <div class="total-card">
+                    <div class="label">Total Records</div>
+                    <div class="value">${total}</div>
+                </div>
+
+                <div class="stat-card" style="background: linear-gradient(135deg, #e8f4ff, #e6f7ec); border: 1px solid #d6e8f5;">
+                    <div class="stat-row" style="margin-bottom: 0;">
+                        <div class="stat-name">Active Wards</div>
+                        <div class="stat-count" style="background:#fff;">${wardCount}</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="${pending > 0 ? 'border-color:#f0a30a; border-width:1.5px;' : ''}">
+                    <div class="stat-row" style="margin-bottom: 0;">
+                        <div class="stat-name" style="font-size:0.9rem;">Pending edits</div>
+                        <div class="stat-count" style="background:${pending > 0 ? '#fff7e0' : '#eef4fb'}; color:${pending > 0 ? '#7a5300' : '#1e6b9e'};">${pending}</div>
+                    </div>
+                </div>
+
+                <div style="margin: 24px 0 12px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #1e6b9e;">
+                    Records by Stage
+                </div>
+                ${stageBars || '<div class="empty-filter">No stage data available</div>'}
+            `;
+
+            document.getElementById("dashboard-sheet").classList.add("active");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeDashboard() {
+            document.getElementById("dashboard-sheet").classList.remove("active");
+            if (!document.getElementById("details-modal").classList.contains("active")) {
+                document.body.style.overflow = "auto";
+            }
+        }
+
+        /* ================================================================
+           DETAILS MODAL
+           ================================================================ */
+        let currentOpenRecordId = null;
+
+        function openDetails(index) {
+            const r = records[index];
+            if (!r) return;
+
+            const id = recordIdOf(r);
+            currentOpenRecordId = id;
+
+            document.getElementById("m-id").innerText = "#" + (id || "-");
+            document.getElementById("m-name").innerText =
+                getField(r, ["Name", "Beneficiary Name"], 1) || "-";
+            document.getElementById("m-category").innerText =
+                getField(r, ["Category"], 2) || "-";
+            document.getElementById("m-ward").innerText =
+                getField(r, ["Ward"], 4) || "-";
+            document.getElementById("m-stage").innerText =
+                getField(r, ["Stage"], 5) || "-";
+            document.getElementById("m-agreement").innerText =
+                getField(r, ["Agreement", "Agreement Status"], 6) || "-";
+
+            const mobile = getField(r, ["Mobile", "Mobile Number"], 3);
+            document.getElementById("m-mobile").innerHTML = mobile
+                ? `<a href="tel:${escapeHtml(mobile)}" style="color:#0f6e9e; text-decoration:none;">📞 ${escapeHtml(mobile)}</a>`
+                : "Not provided";
+
+            document.getElementById("m-address").innerText =
+                getField(r, ["Address"], 14) || getField(r, ["Address"], 2) || "Not provided";
+
+            document.getElementById("m-cs1").innerText = formatINR(getField(r, ["CS 1", "CS1"], 7));
+            document.getElementById("m-cs2").innerText = formatINR(getField(r, ["CS 2", "CS2"], 8));
+            document.getElementById("m-cs3").innerText = formatINR(getField(r, ["CS 3", "CS3"], 9));
+            document.getElementById("m-bp").innerText = formatINR(getField(r, ["BP SHARE", "BP Share"], 10));
+            document.getElementById("m-gp").innerText = formatINR(getField(r, ["GP SHARE", "GP Share"], 11));
+            document.getElementById("m-dp").innerText = formatINR(getField(r, ["DP SHARE", "DP Share"], 12));
+            document.getElementById("m-total").innerText = formatINR(getField(r, ["Total"], 13));
+
+            document.getElementById("m-remarks").innerText =
+                getField(r, ["Remarks", "Status"], 15) || getField(r, ["Remarks", "Status"], 14) || "No remarks noted.";
+
+            markPendingIndicators(id);
+
+            document.getElementById("details-modal").classList.add("active");
+            document.body.style.overflow = "hidden";
+            document.getElementById("nav-back").classList.add("active");
+        }
+
+        function closeDetails() {
+            const wasOpen = document.getElementById("details-modal").classList.contains("active");
+            document.getElementById("details-modal").classList.remove("active");
+            document.getElementById("nav-back").classList.remove("active");
+            if (!document.getElementById("dashboard-sheet").classList.contains("active")) {
+                document.body.style.overflow = "auto";
+            }
+
+            // -------- SYNC ON CLOSE --------
+            if (wasOpen && currentOpenRecordId) {
+                syncPendingEdits(currentOpenRecordId);
+            }
+            currentOpenRecordId = null;
+        }
+
+        function markPendingIndicators(id) {
+            const addrPencil = document.getElementById("edit-pencil-address");
+            const remPencil = document.getElementById("edit-pencil-remarks");
+            addrPencil.classList.remove("has-pending");
+            remPencil.classList.remove("has-pending");
+
+            if (hasPendingEdit(id, "Address")) addrPencil.classList.add("has-pending");
+            if (hasPendingEdit(id, "Remarks")) remPencil.classList.add("has-pending");
+        }
+
+        /* ================================================================
+           EDIT FLOW
+           ================================================================ */
+        function openEdit(field, currentValue) {
+            const currentId = document.getElementById("m-id").innerText.replace(/^#/, "").trim();
+            if (!currentId || currentId === "-") {
+                showToast("Cannot edit: missing record ID", true);
+                return;
+            }
+            editingContext = { id: currentId, field: field };
+            document.getElementById("edit-field-label").innerText = field;
+
+            const ta = document.getElementById("edit-textarea");
+
+            // Prefer the pending edit if it exists, else use the record value
+            const pending = Store.getPending().find(p => p.id === currentId && p.field === field);
+            if (pending) {
+                ta.value = pending.value;
+            } else {
+                ta.value = (currentValue && currentValue !== "-") ? currentValue : "";
+            }
+
+            document.getElementById("edit-save-btn").disabled = false;
+            document.getElementById("edit-modal").classList.add("active");
+            setTimeout(() => ta.focus(), 120);
+        }
+
+        function closeEdit() {
+            document.getElementById("edit-modal").classList.remove("active");
+        }
+
+        function saveEdit() {
+            const { id, field } = editingContext;
+            const value = document.getElementById("edit-textarea").value.trim();
+            if (!id || !field) { showToast("Nothing to save", true); return; }
+
+            // 1. Update in-memory record under all key & index variants
+            const rec = records.find(r => recordIdOf(r) === id);
+            if (!rec) {
+                showToast("Could not find record", true);
+                return;
+            }
+
+            if (field === "Address") {
+                rec["Address"] = value;
+                rec[14] = value;
+                rec[2] = value;
+            } else if (field === "Remarks") {
+                rec["Remarks"] = value;
+                rec["Status"] = value;
+                rec[15] = value;
+                rec[14] = value;
+            } else {
+                rec[field] = value;
+            }
+
+            // 2. Save updated records to sessionStorage
+            Store.setRecords(records);
+
+            // 3. Mark this edit as pending (will be synced when card closes)
+            Store.addPending({ id, field, value });
+
+            // 4. Update pending indicators & re-render
+            updatePendingBadge();
+            markPendingIndicators(id);
+            applyFilters();
+
+            // 5. Show modal's displayed value
+            if (field === "Address") {
+                document.getElementById("m-address").innerText = value || "Not provided";
+            } else if (field === "Remarks") {
+                document.getElementById("m-remarks").innerText = value || "No remarks noted.";
+            }
+
+            closeEdit();
+            showToast(`${field} saved locally — will sync when you close this card`);
+        }
+
+        /* ================================================================
+           SYNC ON CARD CLOSE
+           ================================================================
+           Push all pending edits for this record to Google Sheets.
+           ================================================================ */
+        function syncPendingEdits(recordId) {
+            const pending = Store.getPending().filter(p => p.id === recordId);
+            if (pending.length === 0) return;
+
+            console.log(`Syncing ${pending.length} edit(s) for ${recordId}...`);
+
+            let successCount = 0;
+            let failCount = 0;
+            const promises = pending.map(edit =>
+                fetch(api, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({
+                        action: "update",
+                        id: edit.id,
+                        field: edit.field,
+                        value: edit.value
+                    })
+                })
+                    .then(res => res.json())
+                    .then(resp => {
+                        if (!resp.success) throw new Error(resp.error || "Failed");
+                        Store.removePending(edit.id, edit.field);
+                        successCount++;
+                    })
+                    .catch(err => {
+                        console.warn("Sync failed for", edit.field, err.message);
+                        failCount++;
+                    })
+            );
+
+            Promise.all(promises).then(() => {
+                updatePendingBadge();
+                applyFilters();
+                if (successCount > 0 && failCount === 0) {
+                    showToast(`${successCount} edit${successCount > 1 ? "s" : ""} synced ✓`, false, true);
+                } else if (successCount > 0 && failCount > 0) {
+                    showToast(`${successCount} synced, ${failCount} failed — try refresh`, true);
+                } else if (failCount > 0) {
+                    showToast(`Sync failed — tap refresh to retry`, true);
+                }
+            });
+        }
+
+        /* ================================================================
+           MANUAL REFRESH (top-right button)
+           ================================================================
+           1. Spin the icon
+           2. Push any remaining pending edits for all records
+           3. Fetch fresh records from the sheet
+           4. Save new local copy
+           ================================================================ */
+        async function manualRefresh() {
+            const btn = document.getElementById("refresh-btn");
+            btn.classList.add("spinning");
+            btn.disabled = true;
+
+            try {
+                // 1. Push ALL pending edits first
+                const allPending = Store.getPending();
+                if (allPending.length > 0) {
+                    showToast(`Pushing ${allPending.length} pending edit${allPending.length > 1 ? "s" : ""}…`);
+                    for (const edit of allPending) {
+                        try {
+                            const res = await fetch(api, {
+                                method: "POST",
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify({
+                                    action: "update",
+                                    id: edit.id,
+                                    field: edit.field,
+                                    value: edit.value
+                                })
+                            });
+                            const resp = await res.json();
+                            if (resp.success) {
+                                Store.removePending(edit.id, edit.field);
+                            }
+                        } catch (e) {
+                            console.warn("Push failed:", e);
+                        }
+                    }
+                }
+
+                // 2. Fetch fresh
+                const res = await fetch(api);
+                const data = await res.json();
+                if (!Array.isArray(data)) throw new Error("Bad response");
+
+                records = data;
+                Store.setRecords(data);   // refresh local copy
+                filteredRecords = records.slice();
+                applyFilters();
+                updatePendingBadge();
+
+                const remaining = Store.getPending().length;
+                if (remaining === 0) {
+                    showToast("Refreshed & synced ✓", false, true);
+                } else {
+                    showToast(`Refreshed — ${remaining} edit${remaining > 1 ? "s" : ""} still pending`, true);
+                }
+            } catch (err) {
+                console.error("Refresh failed:", err);
+                showToast("Refresh failed — check connection", true);
+            } finally {
+                btn.classList.remove("spinning");
+                btn.disabled = false;
+            }
+        }
+
+        /* ================================================================
+           ONLINE / OFFLINE
+           ================================================================ */
+        window.addEventListener("online", () => {
+            document.body.classList.remove("is-offline");
+            showToast("Back online — tap refresh to sync");
+        });
+
+        window.addEventListener("offline", () => {
+            document.body.classList.add("is-offline");
+        });
+
+        /* ================================================================
+           TOAST
+           ================================================================ */
+        let toastTimer = null;
+        function showToast(msg, isError = false, isSuccess = false) {
+            const t = document.getElementById("toast");
+            t.innerText = msg;
+            t.classList.toggle("error", !!isError);
+            t.classList.toggle("success", !!isSuccess && !isError);
+            t.classList.add("show");
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
+        }
+
+        /* ================================================================
+           KEYBOARD
+           ================================================================ */
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                if (document.getElementById("edit-modal").classList.contains("active")) closeEdit();
+                else if (document.getElementById("filter-sheet").classList.contains("active")) closeFilter();
+                else if (document.getElementById("dashboard-sheet").classList.contains("active")) closeDashboard();
+                else if (document.getElementById("details-modal").classList.contains("active")) closeDetails();
+            }
+        });
+
+        /* ================================================================
+           BOOT
+           ================================================================ */
+        if (!navigator.onLine) document.body.classList.add("is-offline");
+        bootApp();
+    </script>
+</body>
+
+</html>
